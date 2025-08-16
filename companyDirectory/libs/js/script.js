@@ -85,7 +85,7 @@ const deletePersonnelByID = (id) => {
   });
 };
 
-// **** Departments. ****
+// **** Departments ****
 
 const getAllDepartmentInfo = () => {
   $.ajax({
@@ -127,7 +127,6 @@ const createDepartment = (name, locationID) => {
 };
 
 //Update Department by ID
-
 const updateDepartmentByID = (name, locationID) => {
   $.ajax({
     type: "POST",
@@ -212,27 +211,6 @@ const updateLocationByID = () => {
     },
     error: (xhr, status, error) => {
       toastify("Could not update location data", "red");
-    },
-  });
-};
-
-// Delete Location by ID
-const deleteLocationByID = (id) => {
-  $.ajax({
-    type: "POST",
-    url: "libs/php/deleteLocationByID.php",
-    data: { id },
-    dataType: "json",
-    success: (response) => {
-      if (response.status.code === "200") {
-        toastify("Deleted successfully", "green");
-        getAllLocationInfo();
-      } else {
-        toastify("Failed to delete location by ID", "red");
-      }
-    },
-    error: (xhr, status, error) => {
-      toastify("Could not delete location by ID", "red");
     },
   });
 };
@@ -479,8 +457,7 @@ $("#editPersonnelModal").on("show.bs.modal", function (e) {
   });
 });
 
-// Executes when the form button with type="submit" is clicked
-// Edit Personnel Modal
+// Submit Personnel Form
 $("#editPersonnelForm").on("submit", function (e) {
   // Stop the default browser behviour
   e.preventDefault();
@@ -499,9 +476,10 @@ $("#editPersonnelForm").on("submit", function (e) {
     },
     success: function (result) {
       if (result.status.code == 200) {
+        toastify("Successfully editted personnel", "red");
         // Hide edit personnel modal
         $("#editPersonnelModal").modal("hide");
-
+        // Resets Seacrh Box
         $("#searchInput").val("");
 
         // Refreshes personnel results
@@ -546,8 +524,7 @@ $("#addPersonnelModal").on("show.bs.modal", function (e) {
   });
 });
 
-// Executes when the form button with type="submit" is clicked
-// Add Personnel Modal
+// Submit Add Personnel Form
 $("#addPersonnelForm").on("submit", function (e) {
   // Stop the default browser behviour
   e.preventDefault();
@@ -614,8 +591,7 @@ $("#deletePersonnelModal").on("show.bs.modal", function (e) {
   });
 });
 
-// Executes when the form button with type="submit" is clicked
-// Delete Personnel Modal
+// Submit Delete Personnel Form
 $("#deletePersonnelForm").on("submit", function (e) {
   // Stop the default browser behviour
   e.preventDefault();
@@ -672,8 +648,7 @@ $("#editDepartmentModal").on("show.bs.modal", function (e) {
   });
 });
 
-// Executes when the form button with type="submit" is clicked
-// Edit Department Modal
+// Submit Edit Department Form
 $("#editDepartmentForm").on("submit", function (e) {
   // Stop the default browser behviour
   e.preventDefault();
@@ -734,8 +709,7 @@ $("#addDepartmentModal").on("show.bs.modal", function (e) {
   });
 });
 
-// Executes when the form button with type="submit" is clicked
-// Add Department Modal
+//Submit Add Department Form
 $("#addDepartmentForm").on("submit", function (e) {
   // Stop the default browser behviour
   e.preventDefault();
@@ -800,7 +774,7 @@ $(document).on("click", ".deleteDepartmentBtn", function () {
   });
 });
 
-// Confirm Deletion
+// Confirm Deletion - Department
 $("#deleteDepartmentForm").on("submit", function (e) {
   e.preventDefault();
 
@@ -848,8 +822,7 @@ $("#editLocationModal").on("show.bs.modal", function (e) {
   });
 });
 
-// Executes when the form button with type="submit" is clicked
-// Edit Location Modal
+//Submit Edit Location Form
 $("#editLocationForm").on("submit", function (e) {
   // Stop the default browser behviour
   e.preventDefault();
@@ -879,8 +852,7 @@ $("#editLocationForm").on("submit", function (e) {
   });
 });
 
-// Executes when the form button with type="submit" is clicked
-// Add Location Modal
+// Submit Add Department Form
 $("#addLocationForm").on("submit", function (e) {
   // Stop the default browser behviour
   e.preventDefault();
@@ -917,47 +889,50 @@ $("#addLocationModal").on("hidden.bs.modal", function (e) {
 });
 
 // Delete Location Modal
-$("#deleteLocationModal").on("show.bs.modal", function (e) {
+$(document).on("click", ".deleteLocationBtn", function () {
+  const locID = $(this).data("id"); // get id from button
+  $("#deleteLocationID").val(locID); // store in hidden input
+
   $.ajax({
     url: "libs/php/getLocationByID.php",
     type: "POST",
     dataType: "json",
-    data: { id: $(e.relatedTarget).attr("data-id") }, // Retrieves data-id attrib. from calling btn.
+    data: { id: locID },
     success: function (result) {
       if (result.status.code == 200) {
-        $("#deleteLocationID").html(result.data.personnel[0].id); // Updates hidden input with employee id, so can be referenced when deletion confirmed
-        $("#deleteLocationModal #deleteLocationConfirm").html(
-          `Are you sure you want to delete <strong>${result.data[0].locationName}</strong>, from the database?`
+        const loc = result.data[0];
+        $("#deleteLocationConfirm").html(
+          `Are you sure you want to delete <strong>${loc.name}</strong> location, from the database?`
         );
+        $("#deleteLocationModal").modal("show");
       } else {
         toastify("Failed to delete location", "red");
       }
     },
-    error: function (jqXHR, textStatus, errorThrown) {
+    error: function () {
       toastify("Could not delete location", "red");
     },
   });
 });
 
-// Executes when the form button with type="submit" is clicked
-// Delete Location Modal
+// Confirm Deletion - Location
 $("#deleteLocationForm").on("submit", function (e) {
-  // Stop the default browser behviour
   e.preventDefault();
+
   $.ajax({
     url: "libs/php/deleteLocationByID.php",
     type: "POST",
     dataType: "json",
-    data: { id: $("#deleteLocationID").val() }, // Retrieves employee id from hidden form input
+    data: { id: $("#deleteLocationID").val() },
     success: function (result) {
       if (result.status.code == 200) {
-        // Refreshes personnel results
         getAllLocationInfo();
+        $("#deleteLocationModal").modal("hide"); // close modal after success
       } else {
         toastify("Failed to delete location", "red");
       }
     },
-    error: function (jqXHR, textStatus, errorThrown) {
+    error: function () {
       toastify("Could not delete location", "red");
     },
   });
